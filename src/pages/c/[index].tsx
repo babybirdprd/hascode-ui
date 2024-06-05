@@ -6,6 +6,7 @@ import { ResizeHandle } from "~/components/ResizeHandle";
 import { SideMenu } from "~/components/SideMenu";
 import { EditorTabs } from "~/components/EditorTabs";
 import { ComponentProvider } from "~/context/ComponentProvider";
+import { Chat } from "~/components/Chat"; // Include Chat without relying on session
 import type {
   InferGetServerSidePropsType,
   GetServerSidePropsContext,
@@ -37,7 +38,7 @@ const ComponentPage: NextPageWithLayout<
               className="flex h-full flex-col pr-3"
             >
               <EditorTabs code={component.code} revisionId={lastRevisionId} />
-              {/* Removed session and user-specific rendering */}
+              <Chat revisionId={lastRevisionId} />
             </Panel>
           </PanelGroup>
         </div>

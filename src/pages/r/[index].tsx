@@ -5,6 +5,7 @@ import { ResizeHandle } from "~/components/ResizeHandle";
 import { SideMenu } from "~/components/SideMenu";
 import { EditorTabs } from "~/components/EditorTabs";
 import { ComponentProvider } from "~/context/ComponentProvider";
+import { Chat } from "~/components/Chat"; // Include Chat for revision functionality
 import type {
   InferGetServerSidePropsType,
   GetServerSidePropsContext,
@@ -36,7 +37,7 @@ const RevisionPage: NextPageWithLayout<
               className="flex h-full flex-col pr-3"
             >
               <EditorTabs code={code} revisionId={revisionId} />
-              {/* Removed session and user-specific rendering */}
+              <Chat revisionId={revisionId} />
             </Panel>
           </PanelGroup>
         </div>

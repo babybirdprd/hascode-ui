@@ -22,7 +22,7 @@ export const PageEditor = ({ code }: MyProps) => {
     const handleResize = () => {
       const iframe = iframeRef.current;
       if (!iframe) return;
-      const { contentWindow } = iframeRef.current;
+      const { contentWindow } = iframe;
       if (contentWindow) {
         const { documentElement } = contentWindow.document;
         const width = documentElement.clientWidth;
@@ -42,11 +42,10 @@ export const PageEditor = ({ code }: MyProps) => {
   }, [code]);
 
   const handleScroll = (event: React.WheelEvent) => {
-    if (!iframeRef.current) return;
-    if (!iframeRef.current.contentWindow) return;
-    iframeRef.current.contentWindow.scrollBy(0, event.deltaY);
-
-    // scrollTop = iframeRef.current.scrollTop + event.deltaY;
+    const iframe = iframeRef.current;
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.scrollBy(0, event.deltaY);
+    }
   };
 
   return (
@@ -62,7 +61,7 @@ export const PageEditor = ({ code }: MyProps) => {
           title="The editor's rendered HTML document"
           srcDoc={dom}
           ref={iframeRef}
-          className="pointer-events-none mx-auto my-0 block w-full min-w-[769] overflow-hidden border-0"
+          className="pointer-events-auto mx-auto my-0 block w-full min-w-[769px] overflow-hidden border-0"
         />
         <div className="pointer-events-none absolute inset-y-0 flex max-w-full">
           <svg
@@ -71,7 +70,6 @@ export const PageEditor = ({ code }: MyProps) => {
             width={dimensions.width}
             height={dimensions.height}
             ref={svgRef}
-            // style="transform: translate3d(0px, 0px, 0px);"
           >
             <rect id="SVGSelection"></rect>
             <rect id="SVGHover"></rect>
