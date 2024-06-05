@@ -12,9 +12,10 @@ const anthropicModelName = "claude-3-haiku-20240307";
 
 const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
 });
 // const openaiModelName = "gpt-4-0613";
-const openaiModelName = "gpt-3.5-turbo-0125";
+const openaiModelName = "openai/gpt-4o";
 
 const extractFirstCodeBlock = (input: string) => {
   const pattern = /```(\w+)?\n([\s\S]+?)\n```/g;
@@ -291,7 +292,7 @@ export async function reviseComponentClaude(prompt: string, code: string) {
 export async function generateNewComponentClaude(prompt: string) {
   const msg = await anthropic.messages.create({
     model: anthropicModelName,
-    max_tokens: 2000,
+    max_tokens: 4000,
     messages: [
       { role: "user", content: "Hello, Claude" },
       {

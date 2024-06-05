@@ -1,11 +1,7 @@
 import { ComponentVisibility } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   generateNewComponent,
   generateNewComponentClaude,
@@ -14,16 +10,15 @@ import {
 } from "~/server/openai";
 
 export const componentRouter = createTRPCRouter({
-  createComponent: protectedProcedure
+  createComponent: publicProcedure
     .input(
       z.object({
         prompt: z.string(),
         model: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { prompt, model } = input;
-      const userId = ctx.session.user.id;
       let result = "";
 
       if (prompt === "") {
@@ -42,7 +37,6 @@ export const componentRouter = createTRPCRouter({
       const component = await ctx.db.component.create({
         data: {
           code: result,
-          authorId: userId,
           prompt,
           revisions: {
             create: {
@@ -67,25 +61,21 @@ export const componentRouter = createTRPCRouter({
         },
       };
     }),
-  makeRevision: protectedProcedure
+  makeRevision: publicProcedure
     .input(
       z.object({
         revisionId: z.string(),
         prompt: z.string(),
         model: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
-
+      const { revisionId, prompt, model } = input;
       let result = "";
 
       const baseRevision = await ctx.db.componentRevision.findFirst({
         where: {
-          id: input.revisionId,
-          component: {
-            authorId: userId,
-          },
+          id: revisionId,
         },
       });
 
@@ -96,16 +86,16 @@ export const componentRouter = createTRPCRouter({
         });
       }
 
-      if (input.model === "claude") {
-        result = await reviseComponentClaude(input.prompt, baseRevision.code);
+      if (model === "claude") {
+        result = await reviseComponentClaude(prompt, baseRevision.code);
       } else {
-        result = await reviseComponent(input.prompt, baseRevision.code);
+        result = await reviseComponent(prompt, baseRevision.code);
       }
 
       const newRevision = await ctx.db.componentRevision.create({
         data: {
           code: result,
-          prompt: input.prompt,
+          prompt,
           componentId: baseRevision.componentId,
         },
       });
@@ -116,7 +106,7 @@ export const componentRouter = createTRPCRouter({
         },
         data: {
           code: result,
-          prompt: input.prompt,
+          prompt,
           revisions: {
             connect: {
               id: newRevision.id,
@@ -139,12 +129,12 @@ export const componentRouter = createTRPCRouter({
         },
       };
     }),
-  forkRevision: protectedProcedure
+  forkRevision: publicProcedure
     .input(
       z.object({
         revisionId: z.string(),
         includePrevious: z.boolean().default(false).optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const { revisionId, includePrevious } = input;
@@ -163,7 +153,7 @@ export const componentRouter = createTRPCRouter({
       });
 
       const revisionIndex = component?.revisions.findIndex(
-        (rev) => rev.id === revisionId,
+        (rev) => rev.id === revisionId
       );
       if (!component || revisionIndex === undefined) {
         throw new TRPCError({
@@ -189,23 +179,9 @@ export const componentRouter = createTRPCRouter({
         });
       }
 
-      const userId = ctx.session.user.id;
-
-      // Users can fork public revisions or, if private, their own.
-      if (
-        component.authorId != userId &&
-        component.visibility === ComponentVisibility.PRIVATE
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "You don't have the permission to fork this revision",
-        });
-      }
-
       const newComponent = await ctx.db.component.create({
         data: {
           code: revisions[0]!.code,
-          authorId: userId,
           prompt: revisions[0]!.prompt,
           revisions: {
             create: revisions,
@@ -243,17 +219,7 @@ export const componentRouter = createTRPCRouter({
       });
 
       if (component) {
-        const userId = ctx.session?.user.id;
-
-        if (
-          component.authorId !== userId &&
-          component.visibility === ComponentVisibility.PRIVATE
-        ) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-          });
-        }
-
+        // Since auth is removed, we don't compare the authorId anymore
         return component;
       }
 
@@ -279,17 +245,7 @@ export const componentRouter = createTRPCRouter({
       });
 
       if (component) {
-        const userId = ctx.session?.user.id;
-
-        if (
-          component.authorId !== userId &&
-          component.visibility === ComponentVisibility.PRIVATE
-        ) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-          });
-        }
-
+        // Since auth is removed, we don't compare the authorId anymore
         return component;
       }
 
@@ -298,7 +254,7 @@ export const componentRouter = createTRPCRouter({
         message: "No component found",
       });
     }),
-  getMyComponents: protectedProcedure
+  getMyComponents: publicProcedure
     .input(
       z.object({
         pageIndex: z.number().default(0),
@@ -306,18 +262,9 @@ export const componentRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
-
-      const componentCount = await ctx.db.component.count({
-        where: {
-          authorId: userId,
-        },
-      });
+      const componentCount = await ctx.db.component.count();
 
       const components = await ctx.db.component.findMany({
-        where: {
-          authorId: userId,
-        },
         include: {
           revisions: true,
         },
@@ -346,7 +293,7 @@ export const componentRouter = createTRPCRouter({
  * and perhaps implement ad-hoc procedure rather than use protectedProcedure.
  */
 export const componentImportRouter = createTRPCRouter({
-  importComponent: protectedProcedure
+  importComponent: publicProcedure
     .input(
       z.object({
         /* @todo set max length ? */
@@ -355,7 +302,6 @@ export const componentImportRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
       const { code, description } = input;
 
       // @todo validate code
@@ -369,7 +315,6 @@ export const componentImportRouter = createTRPCRouter({
       const component = await ctx.db.component.create({
         data: {
           code,
-          authorId: null,
           prompt: description,
           revisions: {
             create: {
