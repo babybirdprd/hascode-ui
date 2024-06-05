@@ -1,4 +1,3 @@
-import { useSession } from "next-auth/react";
 import { useState, type ReactElement, useRef, Fragment } from "react";
 import { ApplicationLayout } from "~/components/AppLayout";
 import {
@@ -57,14 +56,10 @@ const NewPage: NextPageWithLayout = () => {
   const [input, setInput] = useState<string>("");
 
   const generateComponent = api.component.createComponent.useMutation();
-  const { data: session } = useSession();
   const randomItem =
     loadingItems[Math.floor(Math.random() * loadingItems.length)]!;
 
   const handleGenerateComponent = async (prompt: string) => {
-    if (!session) {
-      return router.push("/login");
-    }
 
     // Prevent double submission
     if (isGenerating) return;
