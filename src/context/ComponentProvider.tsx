@@ -8,7 +8,6 @@ interface Tab {
 }
 
 type ComponentContextType = {
-  // page: Page;
   tabs: Tab[];
   setActiveTab: (id?: string) => Promise<void>;
   model: string;
@@ -22,7 +21,6 @@ const ComponentContext = createContext<ComponentContextType | undefined>(
 // Transforms the TSX code to JS
 
 interface ProviderProps extends WithChildren {
-  // site: Site;
 }
 
 // The provider for the ComponentContext

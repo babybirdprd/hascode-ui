@@ -1,7 +1,6 @@
 import { useState, type ReactElement, useMemo } from "react";
 import { ApplicationLayout } from "~/components/AppLayout";
 import { Button } from "~/components/Button";
-import { useSession } from "next-auth/react";
 import { api } from "~/utils/api";
 import { type NextPageWithLayout } from "./_app";
 import { LoadingPage } from "~/components/LoadingPage";
@@ -30,7 +29,6 @@ type Component = {
 type fetchDataOptions = { pageIndex: number; pageSize: number };
 
 const MyUIsPage: NextPageWithLayout = () => {
-  const { data: session, status } = useSession({ required: true });
   const [{ pageIndex, pageSize }, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -102,11 +100,6 @@ const MyUIsPage: NextPageWithLayout = () => {
     manualPagination: true,
   });
 
-  const isSessionLoading = status === "loading";
-
-  if (isSessionLoading || !session) {
-    return <LoadingPage />;
-  }
 
   return (
     <div className="h-full bg-neutral-100 py-10">
