@@ -1,4 +1,3 @@
-import { SessionProvider } from "next-auth/react";
 import { type AppProps } from "next/app";
 import { api } from "~/utils/api";
 import "~/styles/globals.css";
@@ -16,15 +15,13 @@ type AppPropsWithLayout = AppProps & {
 
 const MyApp = ({
   Component,
-  pageProps: { session, ...pageProps },
+  pageProps,
 }: AppPropsWithLayout) => {
   // Use the layout defined at the page level, if available
   const getLayout = Component.getLayout ?? ((page: ReactElement) => page);
 
   return (
-    <SessionProvider session={session}>
       {getLayout(<Component {...pageProps} />)}
-    </SessionProvider>
   );
 };
 
