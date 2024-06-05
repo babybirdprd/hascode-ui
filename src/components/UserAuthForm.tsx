@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { signIn } from "next-auth/react";
 import { cn } from "~/utils/utils";
 import { useRouter } from "next/router";
 
